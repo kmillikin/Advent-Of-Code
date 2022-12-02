@@ -38,15 +38,15 @@ VARIABLE BLOCK-POS
     OVER C! PAD <>  ( WRITE THE CR AS WELL )
 ;
 
-( Return the winner of a game, given the two strategies.  )
-( 'A' = rock, 'B' = paper, 'C' = scissors                 )
-( Result is 2 for the first player winning, 1 for a draw, )
-( and 0 for the first player losing.                      )
-: winner ( fst snd -- res )
-    ( It's a draw if they're equal, player 1 wins if    )
-    ( they choose a strategy that is one more, eg A < B )
-    ( or else two less, C - A = 2.                      )
-    ( P1 P2 RES P1-P2 +1 mod3 )
+( RETURN THE WINNER OF A GAME, GIVEN THE TWO STRATEGIES.  )
+( 'A' = ROCK, 'B' = PAPER, 'C' = SCISSORS                 )
+( RESULT IS 2 FOR THE FIRST PLAYER WINNING, 1 FOR A DRAW, )
+( AND 0 FOR THE FIRST PLAYER LOSING.                      )
+: WINNER ( FST SND -- RES )
+    ( IT'S A DRAW IF THEY'RE EQUAL, PLAYER 1 WINS IF    )
+    ( THEY CHOOSE A STRATEGY THAT IS ONE MORE, EG A < B )
+    ( OR ELSE TWO LESS, C - A = 2.                      )
+    ( P1 P2 RES P1-P2 +1 MOD3 )
     ( A  A  D    0     1  1   )
     ( A  B  L   -1     0  0   )
     ( A  C  W   -2    -1  2   )
@@ -56,34 +56,34 @@ VARIABLE BLOCK-POS
     ( C  A  L    2     3  0   )
     ( C  B  W    1     2  2   )
     ( C  C  D    0     1  1   )
-    - 1+ 3 mod
+    - 1+ 3 MOD
 ;
 
-( Return the score for the first player.)
-: score ( fst snd -- n )
-    over swap winner  ( fst result )
-    3 *               ( fst 3*result )
-    + 64 -            ( remember to scale 'A'=1, etc. )
+( RETURN THE SCORE FOR THE FIRST PLAYER.)
+: SCORE ( FST SND -- N )
+    OVER SWAP WINNER  ( FST RESULT )
+    3 *               ( FST 3*RESULT )
+    + 64 -            ( REMEMBER TO SCALE 'A'=1, ETC. )
 ;
 
-variable total
-0 total !
+VARIABLE TOTAL
+0 TOTAL !
 
-: run ( -- )
-    begin
-	?not-eof
-    while
-	    get-next-line drop   ( drop the flag, assume it succeeds )
+: RUN ( -- )
+    BEGIN
+	?NOT-EOF
+    WHILE
+	    GET-NEXT-LINE DROP   ( DROP THE FLAG, ASSUME IT SUCCEEDS )
 
-	    ( Your play is listed second and encrypted, X=A, etc.    )
-	    ( Decrypt by subtracting 'W'.  There is a space between. )
-	    pad dup 2 + c@ 23 -  ( pad fst )
-	    swap c@              ( fst snd )
-	    score total dup @    ( score @total total )
-	    rot + swap !
-    repeat
+	    ( YOUR PLAY IS LISTED SECOND AND ENCRYPTED, X=A, ETC.    )
+	    ( DECRYPT BY SUBTRACTING 'W'.  THERE IS A SPACE BETWEEN. )
+	    PAD DUP 2 + C@ 23 -  ( PAD FST )
+	    SWAP C@              ( FST SND )
+	    SCORE TOTAL DUP @    ( SCORE @TOTAL TOTAL )
+	    ROT + SWAP !
+    REPEAT
 ;
 
-run
-total @ . cr
-bye
+RUN
+TOTAL @ . CR
+BYE
