@@ -33,3 +33,17 @@ file.  You can run them as a simple script, for example:
 ```shell
 gforth day-01-1.fs
 ```
+
+### Notes
+
+I'm committing two solutions each day, `day-XX-1.fs` and `day-XX-2.fs`.  That
+way I can easily go back and run both programs again.  The change for part 2 can
+be seen as the diff between the two parts.
+
+There's a bunch of boilerplate at the top of the file for block I/O which
+probably doesn't change from day to day.  Skip this prologue if you're
+interested in reading the solution.
+
+The program runs over my input which is in `day-XX-input.txt` but it was
+normally developed and tested using the example from the problem which is in
+`day-XX-test.txt`.
