@@ -68,19 +68,25 @@ VARIABLE BLOCK-POS
     SWAP DROP
 ;
 
+\ if(or(and(N1<=M1,N2>=M2),and(M1<=N1,M2>=N2)),1,0)
+
+( <= WORD BY A DIFFERENT NAME.  AVOIDS A REDEFINITION MESSAGE )
+( FROM GFORTH, APPARENTLY NOT PREDEFINED IN VIC FORTH.        )
+: LE ( N M -- FLAG ) 1+ < ;
+: GE ( N M -- FLAG ) SWAP LE ;
+
+
 ( TRUE IF THE FIRST INTERVAL CONTAINS THE SECOND. )
 ( SWAPS THE INTERVALS AS A SIDE EFFECT.           )
-: CONTAINS ( N1 N2 M1 M2 -- M1 M2 N1 N2 FLAG )
-    >R SWAP >R                ( N1 M1 -- R:M2 N2 )
-    OVER OVER 1+ <            ( N1 M1 N1<=M1 -- R:M2 N2 )
-    R> ROT R> DUP >R SWAP >R  ( N1 N1<=M1 N2 M2 -- R:M2 M1 )
-    OVER 1+ <                 ( N1 N1<=M1 N2 M2<=N2 -- R:M2 M1 )
-    ROT AND                   ( N1 N2 FLAG -- R:M2 M1 )
-    ROT ROT                   ( FLAG N1 N2 -- R:M2 M1 )
-    R> ROT ROT                ( FLAG M1 N1 N2 -- R:M2 )
-    R> ROT ROT                ( FLAG M1 M2 N1 N2 )
-    >R >R ROT                 ( M1 M2 FLAG -- R:N2 N1 )
-    R> SWAP R> SWAP           ( M1 M2 N1 N2 FLAG )
+: CONTAINS ( N1 N2 M1 M2 -- FLAG )
+    ROT OVER OVER ( N1 M1 M2 N2 M2 N2 )
+    LE >R         ( N1 M1 M2 N2 R:M2<=N2 )
+    GE >R         ( N1 M1 R:M2<=N2 M2>=N2 )
+    OVER OVER     ( N1 M1 N1 M1 )
+    GE >R         ( N1 M1 R:M2<=N2 M2>=N2 N1>=M1 )
+    LE            ( N1<=M1 R:M2<=N2 M2>=N2 N1>=M1 )
+    R> R> AND     ( N1<=M1 FLAG R:M2<=N2 )
+    SWAP R> AND OR
 ;
 
 VARIABLE TOTAL
@@ -92,11 +98,10 @@ VARIABLE TOTAL
     WHILE
 	    GET-NEXT-LINE DROP
 	    PARSE-LINE
-	    CONTAINS >R CONTAINS R> OR
+	    CONTAINS
 	    IF
 		1 TOTAL +!
 	    THEN
-	    4 0 DO DROP LOOP
     REPEAT
 ;
 
