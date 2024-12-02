@@ -2,7 +2,7 @@
     ([(left right)
       (call-with-input-file "day-1.input"
         (lambda (ip)
-          ;; Read the (reversed) input into a pair of lists.  Assume that the
+          ;; Read the input into a pair of (reversed) lists.  Assume that the
           ;; input is well-formed.
           (let loop ([left '()] [right '()])
             (let ([datum (read ip)])
