@@ -240,6 +240,9 @@ Part two is like part one, but there are `do()` and `don't()` commands that
 should cause the state machine to enable or disable multiplication of values and
 accumulating them into the sum.
 
+A tricky thing about testing this was that the description used a different test
+string for part two.  This isn't usual.
+
 I added a boolean flag whether multiplication was enabled, initially enabled.
 Then I actually built a second finite state machine for when it was disabled ---
 it only has to look for `do()`, not `mul` and numbers.  And I added states to
