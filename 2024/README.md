@@ -26,6 +26,10 @@ chez --script day-Xa.ss
 
 and I've made each solution display their result before terminating.
 
+[December 1](#markdown-header-december-1)
+[December 2](#markdown-header-december-2)
+[December 3](#markdown-header-december-3)
+
 ## December 1
 
 The input consists of two columns of numbers.
