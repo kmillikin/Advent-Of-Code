@@ -29,6 +29,7 @@ and I've made each solution display their result before terminating.
 [1](#december-1)
 [2](#december-2)
 [3](#december-3)
+[4](#december-4)
 
 ## December 1
 
@@ -259,3 +260,59 @@ work for my taste.
 
 The solution still scans the entire input so it's still O(*n*) where *n* is the
 length of the input.
+
+## December 4
+
+The input is a word search board consisting of a grid of characters.  I read a
+line at a time as a string, accumulating them into a list.  I reversed the list
+so it occurred in input order, which wasn't strictly necessary but it's cheap
+and I thought it might help with debugging.  I converted the list of rows into a
+vector so I'd have constant-time indexing.
+
+### Part One
+
+Part one was a word search, looking for the word "XMAS" in any orientation.  An
+insight is that you have to look for all the X's and then "MAS" in any direction
+from an X.
+
+I used a simple single loop over (row,col) positions in the board.  Then, when I
+found an X I used a pair of nested loops to loop over all (x,y) directions to
+search for "MAS" in that direction.  Each of x and y is in the range [-1,1]
+which will include the "direction" (0,0).  I didn't worry about excluding that
+because there definitely won't be "MAS" there because it contains an X.
+
+I used (x,y) directions as cartesian ones, so x was the column delta and y was
+the row delta (inverted).  That doesn't really matter as long as you can use it
+to generate the row and column coordinates of the eight squares around the X.
+
+I used a helper procedure that searched for "MAS" starting at a position in a
+given direction.  And I used a helper procedure for that (and the main loop)
+that was a predicate that reported if the character at a given position was an
+expected one.  This was especially helpful because it can just return false for
+positions that are out of bounds and the rest of the code doesn't have to be
+especially careful about using positions that are out of bounds.
+
+Checking a character at a position is constant time, and then so is checking for
+"MAS" from a position in a direction, and then so is checking for "MAS" in eight
+directions.  The program considers every position in the board, so it is O(*n*)
+where *n* is the size of the board (number of rows times number of columns).
+
+### Part Two
+
+Part two changed the problem so that we had to instead find a pair of "MAS" in
+the shape of an X (diagonally, so not a cross).
+
+Every such cross is centered on an A on the board, so it's simplest to search
+for the A's and then check if they form a cross.  There are four such crosses
+and I just enumerated them by hand and wrote a brute force predicate to check
+for them.  I'm sure I could generate the possibilities somehow but I didn't
+think too long about it.
+
+The predicate looks like a lot of code, but it's pretty efficient.  `and` and
+`or` are short-circuited so it doesn't do a lot more comparisons than it needs.
+I could tweak it to remove the redundant comparisons, but it was fast enough on
+the actual input that I didn't bother.
+
+Checking for a so called X is constant time and so the complexity is again
+O(*n*) where *n* is the size of the board, because it has to inspect the whole
+board to find the A's.
