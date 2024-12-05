@@ -323,7 +323,7 @@ board to find the A's.
 The input consists of two sections, separated by a blank line.  The first
 section has "constraints" of the form X|Y where X and Y are numbers.  It turns
 out that they are always two-digit numbers but I didn't rely on that.  The
-section section has multiple lines with a comma-separated list of (again,
+second section has multiple lines with a comma-separated list of (again,
 two-digit) numbers on each line.
 
 For some reason that I don't yet know, Chez Scheme's `get-datum` procedure
@@ -359,7 +359,7 @@ turn.
 To check for violation of a constraint X|Y, we need to check that if X occurs in
 a sequence, Y does not occur before it.  To implement this, I built a set of the
 numbers seen so far while iterating a sequence.  Then we can check all the
-constraints for a give X by getting the set of all such Y and checking that the
+constraints for a given X by getting the set of all such Y and checking that the
 intersection of these Ys and the already seen numbers is empty.  The only set
 operation I needed was the predicate `intersection-empty?`.  For convenience (to
 avoid allocating empty hash tables), I allowed the boolean false value to also
