@@ -30,6 +30,7 @@ and I've made each solution display their result before terminating.
 [2](#december-2)
 [3](#december-3)
 [4](#december-4)
+[5](#december-5)
 
 ## December 1
 
@@ -316,3 +317,99 @@ the actual input that I didn't bother.
 Checking for a so called X is constant time and so the complexity is again
 O(*n*) where *n* is the size of the board, because it has to inspect the whole
 board to find the A's.
+
+## December 5
+
+The input consists of two sections, separated by a blank line.  The first
+section has "constraints" of the form X|Y where X and Y are numbers.  It turns
+out that they are always two-digit numbers but I didn't rely on that.  The
+section section has multiple lines with a comma-separated list of (again,
+two-digit) numbers on each line.
+
+For some reason that I don't yet know, Chez Scheme's `get-datum` procedure
+parses the floating point number `47.0` from the string `"47|53"`, so I couldn't
+rely on `get-datum`.  Instead, I wrote my own simple non-negative integer parser
+from a given input port.  The parser is hacky and consumes the character after
+the number if any, but that's OK because it means I don't need to write code to
+explicitly skip the bar and comma characters in the input.
+
+### Part One
+
+The constraint X|Y means that if both X and Y occur in a sequence, then Y must
+occur after X.  A way to think of this constraint is to think of when it is
+violated.  It is violated exactly when Y occurs before X in a sequence.  It's OK
+if X occurs before Y and it's OK if either X or Y or both do not occur at all.
+
+For a given X there can be multiple constraints X|Y.  When parsing the first
+section of the input file, I built a hash table mapping the number X to the set
+of numbers Y that appeared in such constraints.  Scheme doesn't have builtin
+sets, so I implemented my own.  I chose a representation as a hash table mapping
+the element as key to the value `#t` (boolean true).  The value doesn't actually
+matter, because the presence of the key indicates that the element is a member
+of the set.  This representation gives amortized constant time lookup and linear
+operations like set intersection.
+
+I parsed the sequences into a list of lists.
+
+The problem asks us to sum up the middle number in each of the sequences that
+satisfy the given constraints.  To implement this, I used a pair of nested loops
+--- the outer one over the sequences and the inner one over each sequence in
+turn.
+
+To check for violation of a constraint X|Y, we need to check that if X occurs in
+a sequence, Y does not occur before it.  To implement this, I built a set of the
+numbers seen so far while iterating a sequence.  Then we can check all the
+constraints for a give X by getting the set of all such Y and checking that the
+intersection of these Ys and the already seen numbers is empty.  The only set
+operation I needed was the predicate `intersection-empty?`.  For convenience (to
+avoid allocating empty hash tables), I allowed the boolean false value to also
+represent an empty set.
+
+The last little bit is to find the middle element of a valid sequence.  I
+guessed that the sequences would always have an odd length (which turns out to
+be correct) and verified it with the example input in the description and a
+"random" (the first two) selection of inputs in my actual problem input.
+
+To find the middle element of a list with on odd length, I used the "hare and
+tortoise".  I marched a pair of pointers down the list, with the hare taking two
+steps for every one step that the tortoise takes.  The tortoise is initially the
+first element of the list and the hare is initially the tail of the list.  When
+the hare reaches the end of the list, the tortoise is the middle element.
+
+If `hashtable-contains?` is constant time and `hashtable-keys` (which produces a
+vector of the keys) is linear in the number of keys, then the
+`intersection-empty?` predicate is linear in the size of the first set (the
+already-seen elements of a sequence), so O(*n*) where *n* is the length of a
+sequence.  It is called for every element of a valid sequence, so O(*n*^2).
+Finding the middle element of a sequence is O(*n*), which we can ignore because
+it grows more slowly than O(*n*^2).  All the sequences are checked, so the
+algorithm is O(*m* * *n*^2) where *m* is the number of sequences and *n* is the
+length of the longest sequence.
+
+(Note when I sketch the complexity of my solutions, I ignore the work it takes
+to parse the input file.  If I were being more rigorous, I shouldn't do that.)
+
+### Part Two
+
+Part two flips the problem around.  Instead of checking for valid sequences, we
+are looking for the invalid ones.  The code that finds valid sequences can be
+used to find invalid ones simply by negating the `intersection-empty?` test.
+
+However, for part two we also need to repair the invalid sequences by putting
+them in a correct order according to the constraints, before computing the sum
+of the middle elements.
+
+The insight here is that this just consists of sorting the sequences.  Scheme's
+`list-sort` procedure takes a comparison procedure that takes a pair of elements
+and returns true if the first must come before the second in the sorted list.
+That is, if the elements are X and Y, the procedure returns true when there
+exists a constraint X|Y.
+
+This is easy to check with my solution --- get the list of all such Ys and check
+if the given Y is an element.
+
+Part two does all the same work as part one, plus it sorts the invalid
+sequences.  The comparison function will be called up to O(*n* * log *n*) times.
+Presuming that hash table lookup is constant time, then sorting will be O(*n* *
+log *n*).  This grows more slowly than O(*n*^2) to check the sequence, so the
+complexity is again O(*m* * *n*^2).
