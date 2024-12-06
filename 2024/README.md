@@ -31,6 +31,7 @@ and I've made each solution display their result before terminating.
 [3](#december-3)
 [4](#december-4)
 [5](#december-5)
+[6](#december-6)
 
 ## December 1
 
@@ -413,3 +414,86 @@ sequences.  The comparison function will be called up to O(*n* * log *n*) times.
 Presuming that hash table lookup is constant time, then sorting will be O(*n* *
 log *n*).  This grows more slowly than O(*n*^2) to check the sequence, so the
 complexity is again O(*m* * *n*^2).
+
+## December 6
+
+The input is a map containing empty spaces (.), obstacles (#), and a single
+guard pointing "north" (^).  I read this into a vector of vectors of characters.
+
+### Part One
+
+The guard marches in the direction they are pointing, until they walk off the
+map.  If there is an obstacle in front of them, then they turn 90 degrees to
+their right (clockwise) instead of taking a step.
+
+The problem of part one is to count the number of (unique) empty spaces that the
+guard will walk through before they leave the map.
+
+I simulated the guard's walk until they left the map.  If their next step would
+take them off the map, the simulation loop terminated and reported the count of
+unique spaces visited.  If their next step would take them into an obstacle, I
+rotated their direction 90 degrees to the right and continued walking from the
+same position with the new direction.  If their next step would take them into
+an empty space, I mutated the map to replace the dot (.) with an X, so that I
+would not count that space again.  Then I incremented the count and continued
+walking from the new position (with the same direction).  If their next step
+would take them into a space they had already visited, I continued walking from
+the new position and did not increment the count.
+
+Developing in Scheme has been very pleasant because of the REPL (the interactive
+Read Evaluate Print Loop).  I've just typed bits of the solution and tested them
+interactively.  Most days, my program actually runs correctly the first time I
+put it all together, because I've interactively tested and fixed the individual
+pieces.
+
+For this one, I had a small bug that I rotated the guard incorrectly from one
+orientation (turning left when they were facing east).  I wrote a simple
+procedure to display the map because Scheme's `display` procedure did not align
+the rows nicely, and the bug was immediately apparent.
+
+The complexity of this solution is the number of steps in the guard's path
+before they leave the map.  Presuming that the walk terminates, that is at most
+four times the number of empty spaces in the map (they could enter each space
+multiple times, but always in a different direction if they don't get caught in
+a loop).  So it's O(*n*) where *n* is the size of the map.
+
+### Part Two
+
+For part one, the guard's walk terminated by walking off the map.  Part two of
+the task asks us to find ways to place a single obstacle in the map to cause the
+guard's walk to enter a loop (not terminate).  The task is to count the number
+of different ways we can place such an obstacle.
+
+The insight you need is that the guard will loop if they ever enter a space they
+have been in before, facing the same direction as before.  So it's not enough to
+record the spaces the guard has walked through, we also need to record the
+direction they were facing.
+
+I tweaked my part one solution in some small ways.  Instead of representing the
+direction the guard was facing by a pair of row delta and column delta (like
+(-1,0) for north), I just used a character in {`^`, `>`, `V`, `<`}.  Then I
+needed helper functions to rotate the direction (as before but with the new
+representation) and to convert the direction to a position delta.
+
+Then for the solution, I looped over all the empty spaces in the map.  For each
+one, I copied the map because I was going to mutate it during the walk.  For
+every space the guard walked through, I stored the list of directions they were
+facing.  Then, if they walked off the map I could report false (no loop).  If
+they encountered an obstacle, I could rotate them as before and continue
+walking.  If they entered an empty space, I mutated the copy of the map to
+replace the dot (.) with the singleton list of their direction.  If they entered
+a space that they had been in before (represented by a list of directions), and
+facing in a direction that they had been in before, I could report true (a loop
+was detected).  Otherwise, I mutated the copy of the map to add the current
+direction to the historical list of directions and to continue walking.
+
+Scheme is also particularly attractive for solutions like this.  I didn't have
+to define a bunch of type definitions to use a representation of a map where
+some cells contained characters and some cells contained lists of characters.
+
+Checking the map is O(*n*) where *n* is the size of the map.  Either the guard
+walks off the map as before, or enters a loop.  In either case, they can only
+visit at most the number of empty spaces in the map (up to four times each
+space).  Placing obstacles in each emtpy space and checking the map gives a
+total complexity of O(*n*^2).  This program took a second or two to run ---
+noticably more than checking a single walk but still fast enough.
