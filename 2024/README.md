@@ -32,6 +32,7 @@ and I've made each solution display their result before terminating.
 [4](#december-4)
 [5](#december-5)
 [6](#december-6)
+[7](#december-7)
 
 ## December 1
 
@@ -497,3 +498,243 @@ visit at most the number of empty spaces in the map (up to four times each
 space).  Placing obstacles in each emtpy space and checking the map gives a
 total complexity of O(*n*^2).  This program took a second or two to run ---
 noticably more than checking a single walk but still fast enough.
+
+## December 7
+
+The input is a number, a colon, and then a space separated list of numbers.
+
+### Part One
+
+The challenge for part one is to see if you can place additon (+) and
+multiplication (*) operators between the numbers in the list to the right of the
+colon, so that it evaluates (from left to right, ignoring the order of
+operations) to the number on the left of the colon.
+
+We need to compute the sum of the results of the input lines that are
+"satisfiable", where there is at least one placement of addition and
+multiplication operators that makes a valid equation.
+
+This involves backtracking: we can try inserting an addition operator between a
+pair of numbers and see if we can insert operators in the rest of the line to
+make it satisfiable.  If not, we should backtrack and try inserting a
+multiplication operator.
+
+The easy way to do this in Scheme is with continuations.  I wrote a
+`satisfiable?` procedure that used a helper that took a pair of continuations.
+The first was a "success" continuation to apply if the equation was satisfiable,
+and the second was a failure continuation to apply if it wasn't.  When we had
+placed operators in every position, we chould apply one of these continuations.
+
+The helper would try to place an addition operator, and then recur on the rest
+of the input line.  The success continuation was passed unchanged, but the
+failure continuation was to try to place an multiplication operator instead,
+with the original success and failure continuation that was passed.
+
+Note that the success continuations never change, so they're actually
+unnecessary.  Instead of passing a continuation that was always `(lambda () #t)`
+and applying it, I could have just used the value `#t`.
+
+### Part Two
+
+Part two introduced a third possible operator, concatenation.  I thought about
+implementing a clever version of concatenation with arithmetic operations, but
+it was fast enough to convert both numbers to strings, append the strings, and
+convert back to a number.
+
+The solution from part one was easily modified to backtrack twice (so to try all
+three possible operators at a position).
+
+## December 8
+
+The input was a map with antennas labeled with digits or letters, and dots (.)
+representing empty spaces.
+
+### Part One
+
+Part one was to find "antinodes" between all pairs of same-labeled antennas.
+Each pair created two antinodes, on the same line with them and the same
+distance away as the distance between the antennas.  Some of these could lie
+outside the map, and are irrelevant.  That challenge was to count the number of
+unique antinode positions on the map.
+
+To avoid searching the map for pairs of antennas, I looped over the map once to
+build a hash table mapping the antenna label to all pairs of coordinates for
+antennas with that label.
+
+Then I could loop over the hashtable values (lists of coordinates) and consider
+each pair exactly once (by considering for each antenna, only the ones that came
+later in the list of same-labeled antennas).  That is, my solution was three
+nested loops.  The outer looped over the hash table keys (the antenna labels).
+The middle loop looped over all antennas with a given label.  The inner loop
+looped over all antennas with that same label that came later in the list of
+antennas.
+
+To count unique positions, I made a copy of the map (to mutate it), and then
+marked antinodes with hash characters (`#`) when they were found.  I incremented
+a counter whenever a new antinode was found.
+
+### Part Two
+
+Part two changes the problem so that antinodes occur evenly spaced all along the
+line between a pair of antennas.  My solution was a modification of the three
+nested loops.  The body of the previous inner loop had a pair of (non-nested)
+loops.  I computed the direction vector from antenna X to antenna Y with the
+same label.  Then I looped in that direction from Y until I left the map,
+marking antinodes and counting them if they were new.  After that I looped in
+the negative direction vector from X until I left the map.
+
+## December 9
+
+The input is a single line representing a disk as a sequence of digits.
+Alternating digits represent the size of files or the size of free space, with a
+file coming first.  Because they are digits, files and free space are limited to
+have a size of 9 or less.  Free space can have size 0.  The files implicitly
+have a numeric ID which is their position in the sequence of files.
+
+### Part One
+
+The task of part one is to compress the disk by moving files to the "left"
+(beginning).  Files can be split to be packed into the free space.  To make the
+result deterministic, the problem specifies that files should be moved from the
+"right" (end) first.
+
+I built a map of the disk as a vector (just as shown in the problem
+description), where I expanded each file into a contiguous sequence with length
+the file length and each element represented by the file ID.  Free spaces were
+represented by dots.
+
+Then the solution is to sweep a pair of indexes over the disk, one from the left
+and one from the right, until they meet.  The left index skips files to find the
+next free space, and the right index skips free space to find the next file
+block.  When a pair of free space and file block are found, they are swapped on
+the disk.
+
+The challenge asks us to compute a checksum by weigthing each file ID with its
+position on the disk, which can be done in a loop over the disk after it is
+compacted.
+
+### Part Two
+
+Part two is a modification of the first part where files cannot be split.
+Instead, they must be moved (again from the right) into the leftmost free space
+that can fit them.
+
+To solve this, I built a free list of empty spaces in order from left to right.
+Each free space was represented by its starting position on the disk and its
+size.  I also built a list of files to consider in turn, represented by starting
+position, size, and file ID in order from right to left on the disk.  This list
+was the list of files to consider moving.
+
+To place a file, I would iterate the free list from the beginning until I found
+a free space to the left of the file, that was large enough to hold it.  If
+there was no position, the file did not move.  If a position was found and the
+file fit exactly, then that free space was removed from the free list.  If the
+file was smaller than the free space, the free space was "split" and the
+remainder was put on the free list in place of the original (maintaining the
+left to right order of free spaces).
+
+My initial solution worked for the test input, but gave a result that was too
+high for my actual input.  There were 1000 files in the actual input.  I first
+tried logging all the intermediate disk maps and the free lists, but that was a
+file that was several GB, took a long time to write, and crashed emacs
+(actually, crashed my whole laptop) to try to open.
+
+So instead, I randomly sampled specific indexes to look for anomalies.  I found
+some suspicious spots and it turned out that I was actually moving files to the
+right if there was a free space for them.  When I fixed this bug I had the
+correct answer.
+
+## December 10
+
+The input is a map consisting of a rectangular grid of digits.  I read this into
+a vector of vectors.
+
+### Part One
+
+We are asked to find paths in the map starting from a zero digit, ascending in
+single steps, and reaching a nine digit.  The task is to count from each zero,
+how many distinct nines we can reach, and sum up those scores.
+
+I initially wrote a solution that counted distinct paths, which is pretty easy.
+Use a procedure that finds paths reaching a nine from a position in the map.  If
+the position is a nine, then there is one such path.  Otherwise, it is the sum
+of the paths from each neighbor that is one higher than the current path.
+That's just a simple recursive procedure.
+
+However, the task is actually to find distinct nines.  I could have modified my
+initial solution to keep a set of the coordinates of the nines to avoid
+duplicates, but that does too much work for my taste.
+
+The "correct" solution is DFS (depth-first search), to traverse the path
+starting from a zero, keeping a worklist of coordinates yet to visit, and
+marking coordinates when they were first reached on a path.  Remove coordinates
+from the worklist until it is empty, if a coordinate has already been visited
+discard it, otherwise explore from there by adding all the neighbors (that are
+one higher in elevation) to the worklist.
+
+Then we can loop over the input map and perform DFS starting from each zero,
+counting the number of unique nines that were reached.
+
+### Part Two
+
+Part two is to find all paths, which I had already implemented.  You don't get
+to see part two until you've solved part one, so I had deleted that code.
+
+I quickly rewrote it and had a good solution.
+
+## December 11
+
+The input is a single line with a space separated sequence of numbers.
+
+### Part One
+
+There is a rule to transform each number, sometimes increasing and sometimes
+splitting into two numbers and decreasing.
+
+The problem was to run the rule over the input numbers 25 times.  I wrote a
+`transform` procedure that transformed a number into a list of numbers (in case
+it was split in two).  Then I wrote a `blink` procedure that took the count 25
+and transformed all the numbers and then recursively blinked 24 times and so on.
+
+Transforming all the numbers can be done by `map transform` over the list, which
+gives a list of lists.  One of my favorite things in Scheme is that `apply
+append` flattens a list of lists by one level.
+
+The challenge was to count the length of the sequence after blinking 25 times.
+
+### Part Two
+
+The task for part two was exactly the same as part one except to blink 75 times.
+When they do that, it's because your first algorithm was probably exponential
+and they're going to expose that.
+
+And in fact, trying my solution with 75 didn't terminate after a reasonable
+amount of time.
+
+To understand what's happening, we have a "forest" starting from the initial
+sequence.  Each number in the initial sequence generates an infinite tree in the
+forest.  For part one, we were generating these trees to a depth of 25.
+
+My solution of mapping a single step transormation over the forest at each step
+was generating it breadth first.
+
+So to fix the slow running time, we need to memoize (record the results of) some
+repeated computation and hope that we have enough similarity in the forest we're
+generating that we can avoid drastic amounts of computation.
+
+I changed my solution to generate trees depth-first.  The problem doesn't ask
+for the specific forest, only how many nodes it has at a specific depth (in this
+case, 75).  So I wrote a function that took a number and a depth, and returned
+the number of nodes in the tree rooted at that number at the given depth.
+
+The first number in my input was 7568, so my procedure `(blink-count 7568 75)`
+would just report how many nodes were in the tree rooted at 7568 at a depth of
+75.
+
+Then I recorded these results in a hash table, mapping pairs (of the root number
+and depth) to the number of leaves at that depth.  When `blink-count` was
+called, it would first check if it's seen the same arguments and simply return
+the result.  Otherwise it would compute the result and record it in the hash
+table before returning it.
+
+This worked, it was really quite fast.
