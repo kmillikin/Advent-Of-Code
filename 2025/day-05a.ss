@@ -31,7 +31,7 @@
         [else (loop (1+ i) start strings)]))))
 
 (let-values ([(ranges ingredients)
-              (call-with-input-file "day-05.test"
+              (call-with-input-file "day-05.input"
                 (lambda (ip)
                   (let ([ranges
                           (let loop0 ([line (get-line ip)] [ranges '()])
